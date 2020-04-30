@@ -64,13 +64,17 @@ FIXTURE_DIRS = (os.path.join(BASE_DIR, 'fixtures'),)
 WSGI_APPLICATION = app_name + '.wsgi.application'
 
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv("DB_ENGINE"),
-        'NAME': os.getenv("DB_NAME"),
-        'HOST': os.getenv("DB_HOST"),
-        'PORT': os.getenv("DB_PORT"),
-        'USER': os.getenv("DB_USER"),
-        'PASSWORD': os.getenv("DB_PASSWORD"),
+    # 'default': {
+    #     'ENGINE': os.getenv("DB_ENGINE"),
+    #     'NAME': os.getenv("DB_NAME"),
+    #     'HOST': os.getenv("DB_HOST"),
+    #     'PORT': os.getenv("DB_PORT"),
+    #     'USER': os.getenv("DB_USER"),
+    #     'PASSWORD': os.getenv("DB_PASSWORD"),
+    # }
+    'default':{
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 
@@ -91,8 +95,8 @@ AUTH_PASSWORD_VALIDATORS = [
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
-        'LOCATION': '127.0.0.1:11211',
+        'BACKEND': os.getenv("CACHE_BACKEND"),
+        'LOCATION': os.getenv("CACHE_LOCATION"),
     }
 }
 
@@ -101,6 +105,7 @@ EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH")
 EMAIL_USE_TLS = True
 
 LANGUAGE_CODE = 'en-us'
@@ -113,4 +118,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = os.getenv("STATIC_URL")
+STATIC_ROOT = os.path.join(BASE_DIR, os.getenv("STATIC_ROOT"))
+
+MEDIA_URL = os.getenv("MEDIA_URL")
+MEDIA_ROOT = os.getenv("MEDIA_ROOT")

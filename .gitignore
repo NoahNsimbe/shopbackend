@@ -13,6 +13,8 @@
 .idea/**/gradle.xml
 .idea/**/libraries
 *.iws /out/
+.idea/
+
 
 # Django #
 *.log
