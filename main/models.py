@@ -65,6 +65,7 @@ def validate_store_id(value):
 
 
 class DeliveryAgents(models.Model):
+    agentId = models.CharField(default=gen_id("AG"), unique=True, max_length=255)
     firstName = models.CharField(default="", max_length=255)
     lastName = models.CharField(default="", max_length=255)
     phone = models.CharField(default="+2567XXXXXXXX", max_length=13)
