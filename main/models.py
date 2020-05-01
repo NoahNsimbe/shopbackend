@@ -1,18 +1,11 @@
-from datetime import datetime
 from random import randint
+from django.contrib.auth.models import User
 from django.utils.translation import gettext_lazy as _
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
-from main.email.email import send_order_notification
-
-
-# from django.contrib.auth.models import User
-#
-#
-# class Employee(models.Model):
-#     user = models.OneToOneField(User, on_delete=models.CASCADE)
-#     department = models.CharField(max_length=100)
+from main.logic.email import order_update_email
+from django.utils import timezone
 
 
 def create_upload(instance, filename):
@@ -118,27 +111,18 @@ class StoreItems(models.Model):
 
 
 class Customers(models.Model):
-    ACTIVE = 'Active'
-    BLOCKED = 'Blocked'
 
-    STATUS_CHOICES = [
-        (ACTIVE, 'Active'),
-        (BLOCKED, 'Blocked')
-    ]
     customerId = models.CharField(default=gen_id("CUS"), unique=True, max_length=255)
-    firstName = models.CharField(default="", max_length=255,)
-    lastName = models.CharField(default="", max_length=255,)
+    userName = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(default="+2567XXXXXXXX", max_length=13,)
-    email = models.EmailField(max_length=254, blank=True,)
     location = models.TextField(blank=True,)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=ACTIVE,)
 
     def __str__(self):
-        return "{0} {1}".format(self.firstName, self.lastName)
+        return "{}".format(self.userName)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Customers'
-        ordering = ["firstName"]
+        ordering = ["userName"]
 
 
 class Orders(models.Model):
@@ -153,9 +137,9 @@ class Orders(models.Model):
     ]
 
     orderId = models.CharField(default=gen_order_id, unique=True, max_length=255)
-    customer = models.ForeignKey(Customers, on_delete=models.CASCADE,)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE,)
     address = models.TextField()
-    orderTime = models.DateTimeField(default=datetime.now(),)
+    orderTime = models.DateTimeField(default=timezone.now,)
     deliveryTime = models.DateTimeField(blank=True,)
     amount = models.FloatField(default=0.00,)
     deliveryAgent = models.ForeignKey(DeliveryAgents, on_delete=models.CASCADE,)
@@ -166,7 +150,7 @@ class Orders(models.Model):
     def save(self, *args, **kwargs):
 
         if self.send_email:
-            send_order_notification(self.customer, self.orderId, self.status)
+            order_update_email(self.customer, self.orderId, self.status)
 
         super().save(*args, **kwargs)
 

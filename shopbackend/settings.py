@@ -14,12 +14,13 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'django.contrib.admindocs',
     'django.contrib.admin',
-    'shopbackend.apps.MyAdminConfig',
+    # 'shopbackend.apps.MyAdminConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'main.apps.MainConfig',
     'rest_framework',
     'corsheaders',
 ]

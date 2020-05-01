@@ -1,11 +1,9 @@
 from django.urls import path
-from .views import stores, order, register_customer, update_customer, delete_customer, fetch_customer
+from .views import stores, OrderView, UserView, register
 
 urlpatterns = [
     path("stores/", stores, name="stores"),
-    path("order/", order, name="order"),
-    path("register_user/", register_customer, name="register_customer"),
-    path("update_user/", update_customer, name="update_customer"),
-    path("delete_user/", delete_customer, name="delete_customer"),
-    path("fetch_user/", fetch_customer, name="fetch_customer"),
+    path('order/', OrderView.as_view(), name='order'),
+    path('user/', UserView.as_view(), name='user'),
+    path("register/", register, name="register"),
 ]

@@ -1,9 +1,17 @@
 from rest_framework import status
 from rest_framework.decorators import api_view
+from rest_framework.parsers import JSONParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from .logic.models import UserClass, OrderClass
+from .logic.orders import fetch_orders, place_order, delete_order, alter_order
 from .logic.stores import fetch_stores, fetch_items
-from .logic.users import *
 import json
+import logging
+from .logic.users import create_user
+
+logger = logging.getLogger(__name__)
 
 
 @api_view(['GET', 'POST'])
@@ -13,7 +21,7 @@ def stores(request):
         store = request.data.get("store")
 
         if not store:
-            return Response(None, status.HTTP_400_BAD_REQUEST)
+            return Response({"Message": "Specify the store"}, status.HTTP_400_BAD_REQUEST)
 
         data = fetch_items(str(store))
     else:
@@ -21,62 +29,86 @@ def stores(request):
 
     data = json.dumps(data)
 
-    return Response(data, status.HTTP_200_OK)
+    return Response(data)
 
 
 @api_view(['POST'])
-def order(request):
+def register(request):
 
-    if request.method == 'POST':
-        store = request.data.get("store")
+    username = request.data.get("username")
+    email = request.data.get("email")
+    password = request.data.get("password")
 
-        if not store:
-            return Response(None, status.HTTP_400_BAD_REQUEST)
+    user = UserClass()
+    user.register(username, password, email)
 
-        data = fetch_items(str(store))
+    if create_user(user):
+        return Response(None, status.HTTP_201_CREATED)
     else:
-        data = fetch_stores()
 
-    data = json.dumps(data)
-
-    return Response(data, status.HTTP_200_OK)
+        return Response({"Message": "Missing Data"}, status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def register_customer(request):
+class UserView(APIView):
+    permission_classes = (IsAuthenticated,)
 
-    data = register_user()
+    def get(self, request):
+        user = request.user
+        # data = json.dumps(user)
+        content = {"user": str(user)}
+        logger.error(user)
+        return Response(content)
 
-    data = json.dumps(data)
+    def post(self, request):
+        user = request.user
+        data = json.dumps(user)
+        return Response(data, status.HTTP_200_OK)
 
-    return Response(data, status.HTTP_200_OK)
+    def put(self, request):
+        return
 
-
-@api_view(['POST'])
-def update_customer(request):
-
-    data = update_user()
-
-    data = json.dumps(data)
-
-    return Response(data, status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-def delete_customer(request):
-
-    data = delete_user()
-
-    data = json.dumps(data)
-
-    return Response(data, status.HTTP_200_OK)
+    def delete(self):
+        return
 
 
-@api_view(['GET'])
-def fetch_customer(request):
+class OrderView(APIView):
+    permission_classes = (IsAuthenticated,)
 
-    data = fetch_user()
+    def get(self, request):
+        data = fetch_orders(request.user)
+        return Response(data)
 
-    data = json.dumps(data)
+    def post(self, request):
+        # store = request.data.get("store")
+        order_data = JSONParser().parse(request)
+        logger.error(order_data)
 
-    return Response(data, status.HTTP_200_OK)
+        user_order = OrderClass()
+        user_order.customer = str(request.user)
+        user_order.load(request.data)
+
+        if place_order(user_order):
+            return Response(None, status.HTTP_201_CREATED)
+
+        return Response(None, status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def delete(self, request):
+
+        user_order = OrderClass()
+        user_order.load(request.data)
+
+        if delete_order(user_order):
+            return Response(None, status.HTTP_200_OK)
+
+        return Response(None, status.HTTP_403_FORBIDDEN)
+
+    def put(self, request):
+
+        user_order = OrderClass()
+        user_order.customer = str(request.user)
+        user_order.load(request.data)
+
+        if alter_order(user_order):
+            return Response(None, status.HTTP_200_OK)
+
+        return Response(None, status.HTTP_403_FORBIDDEN)
