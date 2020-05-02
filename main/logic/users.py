@@ -1,26 +1,35 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
+
 from main.logic.email import account_creation_email, account_modification_email, account_deletion_email, \
     account_deactivation_email
-from main.logic.models import UserClass
+# from main.logic.models import UserClass
 from main.models import Customers
 from main.serializers import CustomersSerializer
 
 
 def create_user(user=None):
     if user is None:
-        user = UserClass()
+        user = User()
 
-    registered_user = User.objects.create_user(user.username, user.email, user.password)
+    try:
+        user.save()
+        customer_group = Group.objects.get(name='Customers')
+        customer_group.user_set.add(user)
 
-    account_creation_email(registered_user)
+    except IntegrityError:
+
+        return False, "User exists"
+
+    account_creation_email(user)
 
     return True, None
 
 
 def update_password(user=None):
     if user is None:
-        user = UserClass()
+        user = User()
 
     updated_user = authenticate(username=user.username, password=user.password)
 
@@ -33,29 +42,29 @@ def update_password(user=None):
         return False
 
 
-def fetch_user(user_name):
-    details = Customers.objects.filter(customerId=user_name)
-    account = User.objects.get_by_natural_key(user_name)
+def fetch_user(username):
+    details = Customers.objects.filter(customerId=username)
+    account = User.objects.get_by_natural_key(username)
 
-    user = UserClass()
-    user.load(details)
-    user.email = account.email
-    user.email = account.user_name
+    # user = dict()
+    #
+    # user["email"] = account.email
+    # user["username"] = account.username
 
-    serializer = CustomersSerializer(user).data
+    serializer = CustomersSerializer(details).data
 
     return serializer
 
 
 def update_account(user):
     if user is None:
-        user = UserClass()
+        user = User()
 
     serializer = CustomersSerializer(data=user)
 
     if serializer.is_valid():
 
-        account = User.objects.get_by_natural_key(user.userName)
+        account = User.objects.get_by_natural_key(user.username)
         account.email = user.email
 
         account.save()
@@ -70,7 +79,7 @@ def update_account(user):
 
 def deactivate_account(user=None):
     if user is None:
-        user = UserClass()
+        user = User()
 
     updated_user = authenticate(username=user.username, password=user.password)
 
@@ -86,7 +95,7 @@ def deactivate_account(user=None):
 
 def delete_account(user=None):
     if user is None:
-        user = UserClass()
+        user = User()
 
     updated_user = authenticate(username=user.username, password=user.password)
 

@@ -1,15 +1,17 @@
+from django.contrib.auth.models import User
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .logic.models import UserClass, OrderClass
+# from .logic.models import UserClass, OrderClass
 from .logic.orders import fetch_orders, place_order, delete_order, alter_order
 from .logic.stores import fetch_stores, fetch_items
 import json
 import logging
 from .logic.users import create_user, update_account, fetch_user
+from .models import Orders
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +19,9 @@ logger = logging.getLogger(__name__)
 @api_view(['GET', 'POST'])
 def test(request):
     data = JSONParser().parse(request)
-    g = data["f"]
+    data["gg"] = "gg"
 
-    return Response("")
+    return Response(data)
 
 
 @api_view(['GET', 'POST'])
@@ -44,17 +46,15 @@ def stores(request):
 def register(request):
 
     data = JSONParser().parse(request)
+    user = User()
 
     try:
-        username = data["username"]
-        email = data["email"]
-        password = data["password"]
+        user.username = data["username"]
+        user.email = data["email"]
+        user.password = data["password"]
 
     except KeyError:
         return Response({"Message": "Missing Data"}, status.HTTP_400_BAD_REQUEST)
-
-    user = UserClass()
-    user.register(username, password, email)
 
     success, message = create_user(user)
 
@@ -75,11 +75,11 @@ class UserView(APIView):
 
         data = JSONParser().parse(request)
 
-        user = UserClass()
-        user.load(data)
-        user.userName = str(request.user)
+        # user = User()
+        # user.username = str(request.user)
+        data["username"] = str(request.user)
 
-        success, message = update_account(user)
+        success, message = update_account(data)
 
         if success:
             return Response(None)
@@ -100,14 +100,9 @@ class OrderView(APIView):
     def post(self, request):
 
         data = JSONParser().parse(request)
+        data["customer"] = str(request.user)
 
-        user_order = OrderClass()
-        user_order.load(data)
-        user_order.customer = str(request.user)
-
-        logger.error(user_order)
-
-        success, message = place_order(user_order)
+        success, message = place_order(data)
 
         if success:
             return Response(None, status.HTTP_201_CREATED)
@@ -117,27 +112,32 @@ class OrderView(APIView):
     def delete(self, request):
 
         data = JSONParser().parse(request)
+        data["customer"] = str(request.user)
 
-        user_order = OrderClass()
-        user_order.load(data)
+        # user_order = OrderClass()
+        # user_order.load(data)
 
-        if delete_order(user_order):
+        if delete_order(data):
             return Response(None, status.HTTP_200_OK)
 
         return Response(None, status.HTTP_403_FORBIDDEN)
 
-    def put(self, request):
+    def put(self, request, order_id):
 
-        data = JSONParser().parse(request)
+        try:
+            old_data = Orders.objects.get(order_id=order_id)
 
-        user_order = OrderClass()
-        user_order.load(data)
-        user_order.customer = str(request.user)
+        except Orders.DoesNotExist:
 
-        success, message = alter_order(user_order)
+            return Response({"Message": "Missing Data"}, status.HTTP_404_NOT_FOUND)
+
+        new_data = JSONParser().parse(request)
+        new_data["customer"] = str(request.user)
+
+        success, message = alter_order(new_data, old_data)
 
         if success:
             return Response(None)
         else:
-            return Response(message, status.HTTP_403_FORBIDDEN)
+            return Response(message, status.HTTP_400_BAD_REQUEST)
 

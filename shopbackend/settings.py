@@ -111,6 +111,8 @@ EMAIL_USE_TLS = True
 
 LANGUAGE_CODE = 'en-us'
 
+# USE_THOUSAND_SEPARATOR = True
+
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
@@ -118,6 +120,8 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+USE_THOUSAND_SEPARATOR = True
 
 STATIC_URL = os.getenv("STATIC_URL")
 STATIC_ROOT = os.path.join(BASE_DIR, os.getenv("STATIC_ROOT"))

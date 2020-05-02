@@ -91,11 +91,11 @@ def validate_store_id(value):
     try:
         comps = value.split("-")
         if not (
-                comps.count == 3 and
+                len(comps) == 3 and
                 (comps[0] == "ST") and
                 comps[1].isdigit() and
                 comps[2].isdigit() and
-                value.count == 14):
+                len(value) == 14):
             raise ValidationError(
                 _('%(value)s does not match the required criteria'),
                 params={'value': value},
@@ -108,53 +108,64 @@ def validate_store_id(value):
 
 
 class Agents(models.Model):
-    agentId = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(default="+2567XXXXXXXX", max_length=13, unique=True)
+    agent_id = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(
+        max_length=30,
+        unique=True,
+        help_text="Please make sure you begin with the country code, for example : <b><em>+256</em></b>"
+    )
     location = models.TextField(blank=True,)
 
     def __str__(self):
-        return "{0}".format(self.agentId)
+        return "{0}".format(self.agent_id)
 
     class Meta:
-        verbose_name = verbose_name_plural = 'Delivery Agents'
+        verbose_name = verbose_name_plural = 'Agents'
 
 
 class Store(models.Model):
-    storeId = models.CharField(
+    store_id = models.CharField(
         default=gen_id("ST"),
         validators=[validate_store_id],
         max_length=255,
-        unique=True,
-        help_text="Please use the following format, where X is a number: <em>ST-XXXXX-XXXXX</em>."
+        primary_key=True,
+        help_text="Please use the following format, where X is a number: <b><em>ST-XXXXX-XXXXX</em></b>."
     )
-    fullName = models.CharField(max_length=255)
-    shortName = models.CharField(max_length=255, unique=True)
-    location = models.CharField(max_length=255, blank=True)
+    full_name = models.CharField(
+        max_length=255,
+        help_text="For example <b><em>Mega Standard Supermarket</em></b>"
+    )
+    short_name = models.CharField(
+        max_length=255,
+        help_text="For example <b><em>Mega Standard</em></b>",
+        unique=True
+    )
+    location = models.TextField(blank=True,)
     description = models.CharField(max_length=255, blank=True)
 
     def __str__(self):
-        return "{0}".format(self.shortName)
+        return "{0}".format(self.short_name)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Stores'
 
 
 class StoreItems(models.Model):
-    itemId = models.CharField(
+    item_id = models.CharField(
         default=gen_item_id,
         unique=True,
         max_length=255,
-        help_text="Please use the following format, where X is a number: <em>ITEM-XXXX-XXXX-XXXX</em>."
+        help_text="Please use the following format, where X is a number: <b><em>ITEM-XXXX-XXXX-XXXX</em></b>."
     )
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
-    unitPrice = models.FloatField(default=0.00)
+    unit_price = models.FloatField(default=0.00)
     category = models.CharField(default="Not Categorised", max_length=255)
-    subCategory = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to=create_upload, height_field=5, width_field=5)
+    sub_category = models.CharField(max_length=255, blank=True)
+    image = models.ImageField(upload_to=create_upload)
     brand = models.CharField(max_length=255, blank=True)
     description = models.TextField(blank=True)
-    keyFeatures = ArrayField(models.CharField(max_length=255), blank=True)
+    key_features = ArrayField(models.CharField(max_length=255), blank=True)
     specifications = ArrayField(models.CharField(max_length=255), blank=True)
 
     def __str__(self):
@@ -166,17 +177,20 @@ class StoreItems(models.Model):
 
 class Customers(models.Model):
 
-    userName = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(default="+2567XXXXXXXX", max_length=13,)
+    customer = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=30,
+                             help_text="Please make sure you begin with the country "
+                                       "code, for example : <b><em>+256</em></b>",
+                             )
     location = models.TextField(blank=True,)
     subscription = models.BooleanField(blank=False,)
 
     def __str__(self):
-        return "{}".format(self.userName)
+        return "{}".format(self.customer)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Customers'
-        ordering = ["userName"]
+        ordering = ["customer_id"]
 
 
 class Orders(models.Model):
@@ -190,13 +204,16 @@ class Orders(models.Model):
         (CONFIRMED, 'Confirmed, awaits delivery'),
     ]
 
-    orderId = models.CharField(default=gen_order_id, unique=True, max_length=255)
+    order_id = models.CharField(default=gen_order_id, primary_key=True, max_length=255)
     customer = models.ForeignKey(User, on_delete=models.CASCADE,)
-    address = models.TextField()
-    orderTime = models.DateTimeField(default=timezone.now,)
-    deliveryTime = models.DateTimeField(blank=True,)
-    amount = models.FloatField(default=0.00,)
-    deliveryAgent = models.ForeignKey(Agents, on_delete=models.CASCADE, )
+    address = models.TextField(help_text="Address to deliver the order to",)
+    order_time = models.DateTimeField(default=timezone.now,)
+    delivery_time = models.DateTimeField(
+        blank=True,
+        help_text="Date and time the order will be delivered",
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    delivery_agent = models.ForeignKey(Agents, on_delete=models.CASCADE, blank=True)
     products = ArrayField(JSONField("ItemsInfo", default=items_default))
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_CONFIRMED,)
     send_email = models.BooleanField(default=True,)
@@ -204,13 +221,13 @@ class Orders(models.Model):
     def save(self, *args, **kwargs):
 
         if self.send_email:
-            order_update_email(self.customer, self.orderId, self.status)
+            order_update_email(self.customer, self.order_id, self.status)
 
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return "{0} : {1}".format(self.customer, self.orderId)
+        return "{0} : {1}".format(self.customer, self.order_id)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Orders'
-        ordering = ["status", "orderTime"]
+        ordering = ["status", "order_time"]
