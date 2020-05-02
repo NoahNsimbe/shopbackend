@@ -1,30 +1,21 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from main.logic.email import account_creation_email, account_modification_email, account_deletion_email, \
+    account_deactivation_email
 from main.logic.models import UserClass
-from main.models import StoreItems, Customers
-from main.serializers import StoreItemsSerializer, CustomersSerializer
+from main.models import Customers
+from main.serializers import CustomersSerializer
 
 
 def create_user(user=None):
     if user is None:
         user = UserClass()
 
-    if user.check_registration():
+    registered_user = User.objects.create_user(user.username, user.email, user.password)
 
-        user.clean()
+    account_creation_email(registered_user)
 
-        registered_user = User.objects.create_user(user.username, user.email, user.password)
-
-        registered_user.is_staff = False
-        registered_user.is_superuser = False
-        registered_user.first_name = user.first_name
-        registered_user.last_name = user.last_name
-
-        registered_user.save()
-
-        return True
-    else:
-        return False
+    return True, None
 
 
 def update_password(user=None):
@@ -36,6 +27,7 @@ def update_password(user=None):
     if updated_user is not None:
         updated_user.set_password(user.password)
         updated_user.save()
+
         return True
     else:
         return False
@@ -43,14 +35,37 @@ def update_password(user=None):
 
 def fetch_user(user_name):
     details = Customers.objects.filter(customerId=user_name)
-    serializer = CustomersSerializer(details, many=True).data
+    account = User.objects.get_by_natural_key(user_name)
+
+    user = UserClass()
+    user.load(details)
+    user.email = account.email
+    user.email = account.user_name
+
+    serializer = CustomersSerializer(user).data
+
     return serializer
 
 
-def update_account(store):
-    store_items = StoreItems.objects.filter(store=store)
-    serializer = StoreItemsSerializer(store_items, many=True).data
-    return serializer
+def update_account(user):
+    if user is None:
+        user = UserClass()
+
+    serializer = CustomersSerializer(data=user)
+
+    if serializer.is_valid():
+
+        account = User.objects.get_by_natural_key(user.userName)
+        account.email = user.email
+
+        account.save()
+        serializer.save()
+
+        account_modification_email(account)
+
+        return True, None
+    else:
+        return False, "Missing Data"
 
 
 def deactivate_account(user=None):
@@ -62,6 +77,8 @@ def deactivate_account(user=None):
     if updated_user is not None:
         updated_user.is_active = False
         updated_user.save()
+
+        account_deactivation_email(updated_user)
         return True
     else:
         return False
@@ -76,6 +93,9 @@ def delete_account(user=None):
     if updated_user is not None:
         updated_user.is_active = False
         updated_user.save()
+
+        account_deletion_email(updated_user)
+
         return True
     else:
         return False

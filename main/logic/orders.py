@@ -29,9 +29,9 @@ def place_order(user_order=None):
 
         order_creation_email(user_order)
 
-        return True
+        return True, None
 
-    return False
+    return False, "Data not valid"
 
 
 def alter_order(user_order=None):
@@ -44,16 +44,16 @@ def alter_order(user_order=None):
         serializer = OrdersSerializer(data=user_order)
 
         if serializer.is_valid():
-            db_orders = Orders.objects.filter(orderId=user_order.orderId)
-            db_orders.delete()
+            # db_order = Orders.objects.filter(orderId=user_order.orderId)
+            # db_order.delete()
 
             serializer.save()
 
             order_change_email(user_order)
 
-            return True
+            return True, None
 
-    return False
+    return False, "Order already confirmed contact us to have your order changed"
 
 
 def delete_order(user_order=None):

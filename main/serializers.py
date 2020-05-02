@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from .models import DeliveryAgents, Store, StoreItems, Orders, Customers
+from .models import Agents, Store, StoreItems, Orders, Customers
 
 
 class DeliveryAgentsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = DeliveryAgents
+        model = Agents
         fields = '__all__'
 
 

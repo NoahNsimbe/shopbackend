@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import DeliveryAgents, Store, StoreItems, Orders, Customers
+from .models import Agents, Store, StoreItems, Orders, Customers
 
 
-@admin.register(DeliveryAgents)
+@admin.register(Agents)
 class DeliveryAgentsAdmin(admin.ModelAdmin):
-    list_display = ('firstName', 'lastName', 'phone')
-    ordering = ['firstName']
-    search_fields = ('firstName', 'lastName')
+    list_display = ('agentId', 'phone')
+    ordering = ['agentId']
+    search_fields = ('User__first_name', 'User__last_name', 'User__user_name')
 
 
 @admin.register(Store)
@@ -29,13 +29,13 @@ class OrdersAdmin(admin.ModelAdmin):
     list_display = ('orderId', 'status', 'customer', 'orderTime', 'deliveryTime', 'deliveryAgent')
     ordering = ['orderTime']
     search_fields = [
-        'orderId', 'customer__firstName', 'customer__lastName', 'deliveryAgent__firstName', 'deliveryAgent__lastName'
+        'orderId', 'User__first_name', 'User__last_name', 'deliveryAgent__firstName', 'deliveryAgent__lastName'
     ]
     autocomplete_fields = ['deliveryAgent', 'customer']
 
 
 @admin.register(Customers)
 class CustomersAdmin(admin.ModelAdmin):
-    list_display = ('firstName', 'lastName', 'status',)
-    ordering = ['firstName']
-    search_fields = ['firstName', 'lastName']
+    list_display = ('userName', 'phone', 'subscription',)
+    ordering = ['userName']
+    search_fields = ['User__userName']

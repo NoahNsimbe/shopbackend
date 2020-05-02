@@ -4,8 +4,12 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.core.exceptions import ValidationError
 from django.db import models
-from main.logic.email import order_update_email
 from django.utils import timezone
+import os
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.template import loader
 
 
 def create_upload(instance, filename):
@@ -14,17 +18,63 @@ def create_upload(instance, filename):
     return '{0}/{1}/{2}'.format(instance.store, instance.category, filename)
 
 
+def send_email(recipient, subject, message, html_message=None):
+
+    sender = settings.EMAIL_HOST_USER
+    try:
+        send_mail(subject, message, sender, recipient, fail_silently=True, html_message=html_message)
+    except Exception:
+        pass
+
+
+def order_update_email(status, order_id, user_name):
+
+    user = User.objects.get_by_natural_key(user_name)
+
+    if status == "DELIVERED":
+        subject = "NOTIFICATION OF ORDER DELIVERY"
+        message = ""
+        path = os.path.join(settings.TEMPLATES, 'email/delivered_order.html')
+        html_message = loader.render_to_string(
+            path,
+            {
+                'first_name': user.first_name,
+                'order_id': order_id,
+            }
+        )
+
+        send_email(user.email, subject, message, html_message)
+
+    elif status == "CONFIRMED":
+        subject = "ORDER CONFIRMATION"
+        message = ""
+        path = os.path.join(settings.TEMPLATES, 'email/confirmed_order.html')
+        html_message = loader.render_to_string(
+            path,
+            {
+                'first_name': user.first_name,
+                'order_id': order_id,
+            }
+        )
+
+        send_email(user.email, subject, message, html_message)
+    else:
+        pass
+
+
 def gen_id(code=None):
     if code is None:
-        code = ""
+        code = "XXX"
     return '{0}-{1}-{2}'.format(code, randint(10000, 99999), randint(10000, 99999))
 
 
-def gen_order_id(instance):
-    code = "REF"
-    rand_no = randint(10000, 99999)
-    date = instance.orderTime
-    return '{0}-{1}-{2}'.format(code, rand_no, date)
+def gen_item_id():
+    return '{0}-{1}-{2}-{3}'.format("ITEM", randint(1000, 9999), randint(1000, 9999), randint(1000, 9999))
+
+
+def gen_order_id():
+    # date = instance.orderTime
+    return '{0}-{1}-{2}-{3}'.format("ORD", randint(1000, 9999), randint(1000, 9999), randint(1000, 9999))
 
 
 def items_default():
@@ -57,15 +107,13 @@ def validate_store_id(value):
         )
 
 
-class DeliveryAgents(models.Model):
-    agentId = models.CharField(default=gen_id("AG"), unique=True, max_length=255)
-    firstName = models.CharField(default="", max_length=255)
-    lastName = models.CharField(default="", max_length=255)
-    phone = models.CharField(default="+2567XXXXXXXX", max_length=13)
-    email = models.EmailField(max_length=254, blank=True)
+class Agents(models.Model):
+    agentId = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(default="+2567XXXXXXXX", max_length=13, unique=True)
+    location = models.TextField(blank=True,)
 
     def __str__(self):
-        return "{0} {1}".format(self.firstName, self.lastName)
+        return "{0}".format(self.agentId)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Delivery Agents'
@@ -77,7 +125,8 @@ class Store(models.Model):
         validators=[validate_store_id],
         max_length=255,
         unique=True,
-        help_text="Please use the following format, where X is a number: <em>ST-XXXXX-XXXXX</em>.")
+        help_text="Please use the following format, where X is a number: <em>ST-XXXXX-XXXXX</em>."
+    )
     fullName = models.CharField(max_length=255)
     shortName = models.CharField(max_length=255, unique=True)
     location = models.CharField(max_length=255, blank=True)
@@ -91,7 +140,12 @@ class Store(models.Model):
 
 
 class StoreItems(models.Model):
-    itemId = models.CharField(default=gen_id, unique=True, max_length=255)
+    itemId = models.CharField(
+        default=gen_item_id,
+        unique=True,
+        max_length=255,
+        help_text="Please use the following format, where X is a number: <em>ITEM-XXXX-XXXX-XXXX</em>."
+    )
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     unitPrice = models.FloatField(default=0.00)
@@ -112,10 +166,10 @@ class StoreItems(models.Model):
 
 class Customers(models.Model):
 
-    customerId = models.CharField(default=gen_id("CUS"), unique=True, max_length=255)
     userName = models.OneToOneField(User, on_delete=models.CASCADE)
     phone = models.CharField(default="+2567XXXXXXXX", max_length=13,)
     location = models.TextField(blank=True,)
+    subscription = models.BooleanField(blank=False,)
 
     def __str__(self):
         return "{}".format(self.userName)
@@ -142,7 +196,7 @@ class Orders(models.Model):
     orderTime = models.DateTimeField(default=timezone.now,)
     deliveryTime = models.DateTimeField(blank=True,)
     amount = models.FloatField(default=0.00,)
-    deliveryAgent = models.ForeignKey(DeliveryAgents, on_delete=models.CASCADE,)
+    deliveryAgent = models.ForeignKey(Agents, on_delete=models.CASCADE, )
     products = ArrayField(JSONField("ItemsInfo", default=items_default))
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_CONFIRMED,)
     send_email = models.BooleanField(default=True,)

@@ -15,12 +15,13 @@ class UserClass(User, Customers):
         self.last_name = last_name
 
     def register(self, user_name, password, email):
-        self.username = user_name
-        self.email = email
-        self.password = password
+        self.username = str(user_name)
+        self.email = str(email)
+        self.password = str(password)
 
     def check_registration(self):
         if self.username and self.email and self.password:
+            self.clean()
             return True
         else:
             return False
@@ -47,3 +48,6 @@ class OrderClass(Orders):
 
     def data(self):
         return
+
+
+
