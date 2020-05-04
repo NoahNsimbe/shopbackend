@@ -68,20 +68,19 @@ def gen_id(code=None):
     return '{0}-{1}-{2}'.format(code, randint(10000, 99999), randint(10000, 99999))
 
 
-def gen_item_id():
-    return '{0}-{1}-{2}-{3}'.format("ITEM", randint(1000, 9999), randint(1000, 9999), randint(1000, 9999))
+def delivery_time():
+    return timezone.now() + timezone.timedelta(hours=12)
 
 
-def gen_order_id():
-    # date = instance.orderTime
-    return '{0}-{1}-{2}-{3}'.format("ORD", randint(1000, 9999), randint(1000, 9999), randint(1000, 9999))
+def gen__id(code=None):
+    if code is None:
+        code = "XXX"
+    return '{0}-{1}-{2}-{3}'.format(code, randint(1000, 9999), randint(1000, 9999), randint(1000, 9999))
 
 
 def items_default():
     details = {
-        "itemId": [
-            {"quantity": "quantity"}
-        ]
+        "itemId": "quantity"
     }
     return details
 
@@ -108,7 +107,8 @@ def validate_store_id(value):
 
 
 class Agents(models.Model):
-    agent_id = models.OneToOneField(User, on_delete=models.CASCADE)
+    agent_id = models.CharField(default=gen_id("AG"), max_length=20, primary_key=True)
+    username = models.OneToOneField(User, on_delete=models.CASCADE, blank=True)
     phone = models.CharField(
         max_length=30,
         unique=True,
@@ -117,7 +117,7 @@ class Agents(models.Model):
     location = models.TextField(blank=True,)
 
     def __str__(self):
-        return "{0}".format(self.agent_id)
+        return "{0}".format(self.username)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Agents'
@@ -151,9 +151,45 @@ class Store(models.Model):
 
 
 class StoreItems(models.Model):
+
+    # KITCHEN = 'KITCHEN'
+    # FURNITURE = 'FURNITURE'
+    # COMPUTING = 'COMPUTING'
+    # MACHINERY = 'MACHINERY'
+    # FOODS = 'FOODS'
+    # CLOTHING = 'CLOTHING'
+    #
+    # CATEGORY_CHOICES = [
+    #     (KITCHEN, 'Kitchen ware'),
+    #     (FURNITURE, 'Furniture'),
+    #     (COMPUTING, 'Computing'),
+    #     (MACHINERY, 'Machinery'),
+    #     (FOODS, 'Foods'),
+    #     (CLOTHING, 'Clothing'),
+    # ]
+    #
+    # CUPS = 'CUPS'
+    # CHAIRS = 'CHAIRS'
+    # LAPTOPS = 'LAPTOPS'
+    # MACHINERY = 'MACHINERY'
+    # FOODS = 'FOODS'
+    # MEN_SHIRTS = 'MEN_SHIRTS'
+    # DRESSES = 'DRESSES'
+    # WOMEN_SHOES = 'WOMEN_SHOES'
+    # MEN_SHOES = 'MEN_SHOES'
+    #
+    # SUB_CATEGORY_CHOICES = [
+    #     (KITCHEN, 'Kitchen ware'),
+    #     (FURNITURE, 'Furniture'),
+    #     (COMPUTING, 'Computing'),
+    #     (MACHINERY, 'Machinery'),
+    #     (FOODS, 'Foods'),
+    #     (CLOTHING, 'Clothing'),
+    # ]
+
     item_id = models.CharField(
-        default=gen_item_id,
-        unique=True,
+        default=gen__id("ITEM"),
+        primary_key=True,
         max_length=255,
         help_text="Please use the following format, where X is a number: <b><em>ITEM-XXXX-XXXX-XXXX</em></b>."
     )
@@ -176,17 +212,14 @@ class StoreItems(models.Model):
 
 
 class Customers(models.Model):
-
-    customer = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(max_length=30,
-                             help_text="Please make sure you begin with the country "
-                                       "code, for example : <b><em>+256</em></b>",
-                             )
-    location = models.TextField(blank=True,)
-    subscription = models.BooleanField(blank=False,)
+    customer_id = models.CharField(default=gen_id("CU"), max_length=20, primary_key=True)
+    username = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=30,)
+    location = models.TextField(blank=True, null=True)
+    subscription = models.BooleanField(blank=False, null=True)
 
     def __str__(self):
-        return "{}".format(self.customer)
+        return "{}".format(self.username)
 
     class Meta:
         verbose_name = verbose_name_plural = 'Customers'
@@ -204,26 +237,20 @@ class Orders(models.Model):
         (CONFIRMED, 'Confirmed, awaits delivery'),
     ]
 
-    order_id = models.CharField(default=gen_order_id, primary_key=True, max_length=255)
-    customer = models.ForeignKey(User, on_delete=models.CASCADE,)
+    order_id = models.CharField(default=gen__id("ORD"), primary_key=True, max_length=255)
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
     address = models.TextField(help_text="Address to deliver the order to",)
     order_time = models.DateTimeField(default=timezone.now,)
     delivery_time = models.DateTimeField(
+        null=True,
         blank=True,
-        help_text="Date and time the order will be delivered",
+        help_text="<b style='color:red''>date and time when the order will be delivered</b>",
     )
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    delivery_agent = models.ForeignKey(Agents, on_delete=models.CASCADE, blank=True)
+    delivery_agent = models.ForeignKey(Agents, on_delete=models.CASCADE, blank=True, null=True)
     products = ArrayField(JSONField("ItemsInfo", default=items_default))
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=NOT_CONFIRMED,)
     send_email = models.BooleanField(default=True,)
-
-    def save(self, *args, **kwargs):
-
-        if self.send_email:
-            order_update_email(self.customer, self.order_id, self.status)
-
-        super().save(*args, **kwargs)
 
     def __str__(self):
         return "{0} : {1}".format(self.customer, self.order_id)

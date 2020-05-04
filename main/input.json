@@ -1,7 +1,18 @@
 {
   "registration": {
     "username": "xx",
-    "password": "xxxxxxxx",
+    "password": "342TdjZaFSfEhVb",
     "email": "nsimbenoah@gmail.com"
+  },
+
+  "place_order": {
+    "customer": "xx",
+    "address": "My address",
+    "order_time": "2020-05-03 15:23:14.096434",
+    "amount": "5000",
+    "products": [{
+      "ITEM-3799-7296-9906": 5
+    }],
+    "send_email": false
   }
 }

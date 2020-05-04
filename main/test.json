@@ -1,0 +1,38 @@
+{
+  "register": {
+    "email": "nsimbenoah@gmail.com"
+  },
+  "account_info": {
+    "username": "test",
+    "email": "test@site.com",
+    "password": "test",
+    "first_name": "Test",
+    "last_name": "Test"
+  },
+
+  "user_info": {
+      "customer_id": "CU-75775-93384",
+      "location": "Bukoto",
+      "phone": "+256757846290",
+      "subscription": true
+  },
+
+  "place_order": {
+    "address": "My address",
+    "amount": "5000",
+    "products": [
+      { "ITEM-3799-7296-9906": 9 },
+      { "ITEM-3799-7296-9906": 8 },
+      { "ITEM-3799-7296-9906": 7 },
+      { "ITEM-3799-7296-9906": 1 }
+    ]
+  },
+
+  "change_order": {
+    "address": "new",
+    "amount": "6888",
+    "products": [
+      { "ITEM-3799-7296-9906": 9 }
+    ]
+  }
+}

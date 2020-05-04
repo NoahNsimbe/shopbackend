@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-
 from .models import Agents, Store, StoreItems, Orders, Customers
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
@@ -9,8 +8,8 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 class AgentsAdmin(admin.ModelAdmin):
     list_display = ('agent_id', 'phone')
     ordering = ['agent_id']
-    search_fields = ('User__username',)
-    autocomplete_fields = ('agent_id',)
+    search_fields = ('User__first_name', 'User__last_name', 'User__username',)
+    autocomplete_fields = ('username',)
 
 
 @admin.register(Store)
@@ -22,8 +21,8 @@ class StoreAdmin(admin.ModelAdmin):
 
 @admin.register(StoreItems)
 class StoreItemsAdmin(admin.ModelAdmin):
-    list_display = ('store', 'category', 'name')
-    ordering = ['store']
+    list_display = ('name', 'category', 'store')
+    ordering = ['store', 'category', 'name']
     search_fields = ('store__short_name', 'store__full_name', 'name', 'brand')
     autocomplete_fields = ['store']
 
@@ -35,15 +34,17 @@ class OrdersAdmin(admin.ModelAdmin):
     search_fields = [
         'order_id', 'User__first_name', 'User__last_name', 'delivery_agent__firstName', 'delivery_agent__last_name'
     ]
+    readonly_fields = ('order_id', 'customer', 'address', 'order_time', 'amount', 'products')
     autocomplete_fields = ['delivery_agent', 'customer']
 
 
 @admin.register(Customers)
 class CustomersAdmin(admin.ModelAdmin):
-    list_display = ('customer', 'phone', 'subscription',)
-    ordering = ['customer']
+    list_display = ('username', 'phone', 'subscription',)
+    ordering = ['username']
     search_fields = ['User__username', 'User__first_name', 'User__last_name']
-    autocomplete_fields = ['customer']
+    autocomplete_fields = ['username']
+    readonly_fields = ('customer_id', 'username', 'phone', 'location' )
 
 
 class CustomerInline(admin.StackedInline):
