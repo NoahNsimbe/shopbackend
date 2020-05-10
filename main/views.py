@@ -29,7 +29,7 @@ def test(request):
 def stores(request):
 
     if request.method == 'POST':
-        store = request.data.get("store")
+        store = request.data.get("store_id")
 
         if not store:
             return Response({"Message": "Specify the store"}, status.HTTP_400_BAD_REQUEST)
@@ -38,7 +38,7 @@ def stores(request):
     else:
         data = fetch_stores()
 
-    data = json.dumps(data)
+    # data = json.dumps(data)
 
     return Response(data)
 

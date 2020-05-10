@@ -12,6 +12,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CORS_ORIGIN_ALLOW_ALL = True
+
 INSTALLED_APPS = [
     'django.contrib.admindocs',
     'django.contrib.admin',
@@ -21,9 +23,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'main.apps.MainConfig',
     'rest_framework',
-    'corsheaders',
+    
 ]
 
 MIDDLEWARE = [
@@ -45,6 +48,7 @@ SIMPLE_JWT = {
 ROOT_URLCONF = app_name + '.urls'
 
 REST_FRAMEWORK = {
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
