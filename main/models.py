@@ -214,9 +214,9 @@ class StoreItems(models.Model):
 class Customers(models.Model):
     customer_id = models.CharField(default=gen_id("CU"), max_length=20, primary_key=True)
     username = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone = models.CharField(max_length=30,)
+    phone = models.CharField(max_length=30, blank=True, null=True,)
     location = models.TextField(blank=True, null=True)
-    subscription = models.BooleanField(blank=False, null=True)
+    subscription = models.BooleanField(default=False, blank=False, null=True)
 
     def __str__(self):
         return "{}".format(self.username)

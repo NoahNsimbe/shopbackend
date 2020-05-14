@@ -10,15 +10,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def create_user(user=None):
+def create_user(user=None, customer=None):
     if user is None:
         user = User()
+
+    if customer is None:
+        customer = Customers()
 
     try:
         user.save()
         created_user = User.objects.get_by_natural_key(user.username)
         created_user.set_password(user.password)
         created_user.save()
+
+        customer.username = user
+        customer.save()
+        # serializer = CustomersSerializer(data=customer)
+        # if serializer.is_valid():
+        #     serializer.save()
+        # else:
+        #     logger.error(serializer.errors)
 
         try:
             customer_group = Group.objects.get(name='Customers')
@@ -87,7 +98,7 @@ def update_account(user):
         user.save()
         serializer.save()
 
-        account_modification_email(user)
+        # account_modification_email(user)
 
         return True, serializer.data
     else:

@@ -12,7 +12,7 @@ from .logic.stores import fetch_stores, fetch_items
 import json
 import logging
 from .logic.users import create_user, update_account, fetch_user, update_info, delete_account, deactivate_account
-from .models import Orders, Customers, gen__id
+from .models import Orders, Customers, gen__id, gen_id
 
 logger = logging.getLogger(__name__)
 
@@ -49,16 +49,22 @@ def register(request):
 
     data = JSONParser().parse(request)
     user = User()
+    customer = Customers()
+
 
     try:
         user.username = data["username"]
         user.email = data["email"]
         user.password = data["password"]
+        user.first_name = data["first_name"]
+        user.last_name = data["last_name"]
+        customer.phone = data["phone"]
+        customer.customer_id = gen_id("CU")
 
     except KeyError:
         return Response({"Error": "Missing Data"}, status.HTTP_400_BAD_REQUEST)
 
-    success, response = create_user(user)
+    success, response = create_user(user, customer)
 
     if success:
         return Response(response, status.HTTP_201_CREATED)
