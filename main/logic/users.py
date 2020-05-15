@@ -5,7 +5,7 @@ from django.db import IntegrityError
 from main.logic.email import account_creation_email, account_modification_email, account_deletion_email, \
     account_deactivation_email
 from main.models import Customers
-from main.serializers import CustomersSerializer
+from main.serializers import CustomersSerializer, UserSerializer
 import logging
 logger = logging.getLogger(__name__)
 
@@ -24,12 +24,10 @@ def create_user(user=None, customer=None):
         created_user.save()
 
         customer.username = user
-        customer.save()
-        # serializer = CustomersSerializer(data=customer)
-        # if serializer.is_valid():
-        #     serializer.save()
-        # else:
-        #     logger.error(serializer.errors)
+        serializer = CustomersSerializer(data=CustomersSerializer(customer).data)
+
+        if serializer.is_valid():
+            serializer.save()
 
         try:
             customer_group = Group.objects.get(name='Customers')
@@ -55,7 +53,8 @@ def create_user(user=None, customer=None):
 
     account_creation_email(user)
 
-    return True, {"username": user.username, "email": user.email}
+    user_serializer = UserSerializer(user)
+    return True, user_serializer.data
 
 
 def update_password(user=None):

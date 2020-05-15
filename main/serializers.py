@@ -16,9 +16,13 @@ class StoreSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source='customers.phone')
+    location = serializers.CharField(source='customers.location')
+    subscription = serializers.BooleanField(source='customers.subscription')
+
     class Meta:
         model = User
-        fields = ('username',)
+        fields = ('username', 'first_name', 'last_name', 'email', 'phone', 'location', 'subscription')
 
 
 class StoreItemsSerializer(serializers.ModelSerializer):
