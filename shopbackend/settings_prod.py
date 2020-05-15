@@ -6,21 +6,16 @@ from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app_name = os.path.basename(os.path.dirname(__file__))
 
-# env_path = Path('.') / '.env'
-# env_path = Path('.') / '.env_prod'
-
-# load_dotenv(dotenv_path=env_path)
 load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
-DEBUG = os.getenv("DEBUG")
+DEBUG = False
 
-#ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['*']
 
 ADMINS = os.getenv("ADMINS")
 MANAGERS = os.getenv("MANAGERS")
-ALLOWED_HOSTS = [str(os.getenv("HOST")).split(':')[0]]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -53,8 +48,6 @@ MIDDLEWARE = [
 ]
 
 SIMPLE_JWT = {
-    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME"))),
-    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=os.getenv("REFRESH_TOKEN_LIFETIME")),
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
@@ -212,6 +205,6 @@ STATIC_ROOT = os.getenv("STATIC_ROOT")
 MEDIA_URL = os.getenv("MEDIA_URL")
 MEDIA_ROOT = os.getenv("MEDIA_ROOT")
 
-#SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE")
-#CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE")
-#SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
