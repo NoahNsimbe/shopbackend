@@ -73,17 +73,18 @@ def update_password(user=None):
 
 
 def fetch_user(username):
-    account = User.objects.get_by_natural_key(username)
-    serializer = CustomersSerializer(account.customers).data
-    serializer.pop("username")
+    user = User.objects.get_by_natural_key(username)
+    # serializer = CustomersSerializer(account.customers).data
+    # serializer.pop("username")
 
-    user = dict()
-    user["first_name"] = account.first_name
-    user["last_name"] = account.last_name
-    user["email"] = account.email
-    user["account info"] = serializer
+    # user = dict()
+    # user["first_name"] = account.first_name
+    # user["last_name"] = account.last_name
+    # user["email"] = account.email
+    # user["account info"] = serializer
+    user_serializer = UserSerializer(data=UserSerializer(user))
 
-    return user
+    return user_serializer
 
 
 def update_account(user):
