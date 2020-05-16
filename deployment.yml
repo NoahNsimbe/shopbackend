@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-back-deployment
+  labels:
+    app: shop-back
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: shop-back
+  template:
+    metadata:
+      labels:
+        app: shop-back
+    spec:
+      containers:
+      - name: shop-backend
+        image: noahnsimbe/shop:0.2
+        imagePullPolicy: Never
+        ports:
+          - containerPort: 8000
