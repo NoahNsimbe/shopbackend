@@ -35,4 +35,4 @@ venv.bak/
 
 # Settings
 prod_settings.py
-
+gcloud_credentials.json

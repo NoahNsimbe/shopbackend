@@ -1,7 +1,8 @@
 import os
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 from datetime import timedelta
 from pathlib import Path
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app_name = os.path.basename(os.path.dirname(__file__))
@@ -11,16 +12,25 @@ app_name = os.path.basename(os.path.dirname(__file__))
 
 # load_dotenv(dotenv_path=env_path)
 load_dotenv()
+# load_dotenv(find_dotenv())
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 DEBUG = os.getenv("DEBUG")
 
-#ALLOWED_HOSTS = ['*']
+GOOGLE_APPLICATION_CREDENTIALS = os.path.join(BASE_DIR + '/shopbackend/gcloud_credentials.json')
+DEFAULT_FILE_STORAGE = 'shopbackend.gcloud.GoogleCloudMediaFileStorage'
+STATICFILES_STORAGE = 'shopbackend.gcloud.GoogleCloudStaticFileStorage'
+GS_PROJECT_ID = os.getenv("GS_PROJECT_ID")
+GS_STATIC_BUCKET_NAME = os.getenv("GS_STATIC_BUCKET_NAME")
+GS_MEDIA_BUCKET_NAME = os.getenv("GS_MEDIA_BUCKET_NAME")
+
+
+ALLOWED_HOSTS = ['*']
 
 ADMINS = os.getenv("ADMINS")
 MANAGERS = os.getenv("MANAGERS")
-ALLOWED_HOSTS = [str(os.getenv("HOST")).split(':')[0]]
+# ALLOWED_HOSTS = [str(os.getenv("HOST")).split(':')[0]]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -53,8 +63,6 @@ MIDDLEWARE = [
 ]
 
 SIMPLE_JWT = {
-    # 'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv("ACCESS_TOKEN_LIFETIME"))),
-    # 'REFRESH_TOKEN_LIFETIME': timedelta(days=os.getenv("REFRESH_TOKEN_LIFETIME")),
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
@@ -191,7 +199,8 @@ EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH")
+# EMAIL_FILE_PATH = os.getenv("EMAIL_FILE_PATH")
+EMAIL_FILE_PATH = 'https://storage.googleapis.com/{}/emails/'.format(GS_MEDIA_BUCKET_NAME)
 EMAIL_USE_TLS = True
 
 LANGUAGE_CODE = 'en-us'
@@ -206,12 +215,21 @@ USE_TZ = True
 
 USE_THOUSAND_SEPARATOR = True
 
-STATIC_URL = os.getenv("STATIC_URL")
-STATIC_ROOT = os.getenv("STATIC_ROOT")
+# STATIC_URL = os.getenv("STATIC_URL")
+# STATIC_ROOT = os.getenv("STATIC_ROOT")
+#
+# MEDIA_URL = os.getenv("MEDIA_URL")
+# MEDIA_ROOT = os.getenv("MEDIA_ROOT")
 
-MEDIA_URL = os.getenv("MEDIA_URL")
-MEDIA_ROOT = os.getenv("MEDIA_ROOT")
 
-#SESSION_COOKIE_SECURE = os.getenv("SESSION_COOKIE_SECURE")
-#CSRF_COOKIE_SECURE = os.getenv("CSRF_COOKIE_SECURE")
-#SECURE_SSL_REDIRECT = os.getenv("SECURE_SSL_REDIRECT")
+STATIC_URL = 'https://storage.googleapis.com/{}/'.format(GS_STATIC_BUCKET_NAME)
+STATIC_ROOT = "static/"
+
+MEDIA_URL = 'https://storage.googleapis.com/{}/'.format(GS_MEDIA_BUCKET_NAME)
+MEDIA_ROOT = "media/"
+
+UPLOAD_ROOT = 'media/uploads/'
+
+DOWNLOAD_ROOT = os.path.join(BASE_DIR, "static/media/downloads")
+DOWNLOAD_URL = STATIC_URL + "media/downloads"
+

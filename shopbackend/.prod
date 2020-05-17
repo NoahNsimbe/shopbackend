@@ -39,6 +39,10 @@ DB_PORT=5432
 DB_USER="shop"
 DB_PASSWORD="shop"
 
+GS_PROJECT_ID="career-track-project"
+GS_STATIC_BUCKET_NAME="shop-backend"
+GS_MEDIA_BUCKET_NAME="shop-backend"
+
 MEDIA_ROOT="/home/noah/projects/onlineImages/media/"
 STATIC_ROOT="staticfiles"
 
